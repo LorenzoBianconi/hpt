@@ -1,0 +1,62 @@
+# Based on OpenWrt buildroot template
+
+include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/kernel.mk
+
+PKG_NAME:=hpt
+PKG_REV:=1
+PKG_VERSION:=1
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+
+include $(INCLUDE_DIR)/package.mk
+
+define KernelPackage/hpt
+  SUBMENU:=Other modules
+  TITLE:=High precision timer
+  VERSION:=$(LINUX_VERSION)+$(PKG_VERSION)-$(BOARD)-$(PKG_RELEASE)
+  FILES:= $(PKG_BUILD_DIR)/hpt.$(LINUX_KMOD_SUFFIX)
+  AUTOLOAD:=$(call AutoLoad,30,hpt)
+endef
+
+define KernelPackage/hpt/description
+	High precision timer module
+endef
+
+define KernelPackage/hpt/config
+	menu "Configuration"
+		depends on PACKAGE_kmod-hpt
+
+	config DEBUG_HPT
+		bool "Enable debug printk"
+		default n
+	endmenu
+endef
+
+BUILDFLAGS:=					\
+	$(if $(CONFIG_DEBUG_HPT),-DDEBUG_HPT)
+
+MAKE_ARGS:= 					\
+	 ARCH="$(LINUX_KARCH)" 			\
+	 KERNELDIR="$(LINUX_DIR)"		\
+	 CROSS_COMPILE="$(KERNEL_CROSS)"	\
+	 EXTRA_CFLAGS="$(BUILDFLAGS)" 
+
+define Build/Prepare
+	$(RM) -rf $(PKG_BUILD_DIR)
+	mkdir -p $(PKG_BUILD_DIR)
+	$(CP) $(DL_DIR)/$(PKG_SOURCE)/* $(PKG_BUILD_DIR)/
+endef
+
+define Build/Compile
+	$(MAKE) -C $(PKG_BUILD_DIR) $(MAKE_ARGS)
+endef
+
+define KernelPackage/hpt/install
+	$(INSTALL_DIR) $(1)/lib/modules/$(LINUX_VERSION)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/hpt.$(LINUX_KMOD_SUFFIX) $(1)/lib/modules/$(LINUX_VERSION)
+endef
+
+$(eval $(call KernelPackage,hpt))

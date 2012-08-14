@@ -1,0 +1,30 @@
+HPT (High Precision Time) is a simple kernel module that I wrote to implement
+a centralized reference clock for the system in order to carry out some delay
+measurements on an embedded device. HPT exploits Linux High Resolution Timers
+(HRT) [http://www.tglx.de/projects/hrtimers/ols2006-hrtimers.pdf] that operate
+at the granularity of nanoseconds but at the same time guarantee a low overhead 
+for the system.
+In order to use HPT, you need to verify that your target processor has the proper
+support. For this purpose just type:
+
+	grep resolution  /proc/timer_list
+
+and check the resolution reported for your clocks. If your clock supports high
+resolution, it will have a .resolution value of 1 nsecs. If it does not, then it
+will have a .resolution value that equals the number of nanoseconds in a jiffy
+(usually 10000 nsecs, on embedded platforms).
+Moreover, you need to configure HRT support in the Linux kernel (CONFIG_HIGH_RES_TIMERS=y).
+
+package content:
+- hpt.c: htp module
+- Makefile
+- hpt.patch: you need to patch you kernel in order to export HPT hooks
+- Makefile_pkg_openwrt: is the OpenWrt Makefile for this module
+
+This module was tested with Linux kernel 2.6.{32-36} on MIPS 24Kc-Intel Core2 Duo
+
+For further information please contact me at me@lorenzobianconi.net
+
+Cheers
+
+Lorenzo
